@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Created-By: IntelliJ IDEA
+Built-By: starshine
+Build-Jdk: Oracle OpenJDK 20
+Implementation-Title: ChatSystem
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: org.example
+Main-Class: ${start-class}
+
