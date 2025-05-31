@@ -9,4 +9,6 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     // 查询用户加入的所有群聊
     @Query("SELECT g FROM Group g JOIN GroupMember gm ON g.id = gm.groupId WHERE gm.userId = :userId")
     List<Group> findGroupsByUserId(Long userId);
+
+    List<Group> findByNameContainingIgnoreCase(String keyword);
 }

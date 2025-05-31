@@ -82,4 +82,14 @@ public class GroupService {
 
         return saved;
     }
+
+    // 根据群名搜索群聊
+    public List<Group> searchGroupsByName(String keyword) {
+        return groupRepository.findByNameContainingIgnoreCase(keyword);
+    }
+
+    // 根据群ID查找群聊
+    public Group findById(Long groupId) {
+        return groupRepository.findById(groupId).orElse(null);
+    }
 }

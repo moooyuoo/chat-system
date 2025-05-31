@@ -27,7 +27,26 @@ async function renderFriendList() {
         </ul>`;
 
 }
-
+async function renderMyGroupList() {
+    const groupBox = document.querySelector('.group-list-content');
+    groupBox.innerHTML = '加载中...';
+    try {
+        const res = await fetch('/api/group/list');
+        const list = res.ok ? await res.json() : [];
+        if (!list.length) {
+            groupBox.innerHTML = '<div class="empty-tip">暂无群聊</div>';
+            return;
+        }
+        groupBox.innerHTML = list.map(group => `
+            <div class="group-item">
+                <img src="${group.avatar || 'default-group.png'}" class="group-avatar"/>
+                <div class="group-name">${group.name}</div>
+            </div>
+        `).join('');
+    } catch {
+        groupBox.innerHTML = '<div class="empty-tip">加载失败</div>';
+    }
+}
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarBtns = document.querySelectorAll('.sidebar-btn');
     const mainContent = document.querySelector('.main-content');
@@ -51,6 +70,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="friend-list-content"></div>
                     </div>
                 </div>
+                
+                <!-- 新增：我加入的群 -->
+        <div class="friend-section">
+            <div class="section-header">
+                <h2 class="section-title">我加入的群</h2>
+                <button class="create-group-btn">
+        <i class="icon-plus"></i> 创建群聊
+    </button>
+    <button class="join-group-btn"><i class="icon-plus"></i> 加入群聊</button>
+
+            
+            </div>
+            <div class="group-list-content"></div>
+        </div>
+
+
 
                 <!-- 查找陌生人部分 -->
                 <div class="friend-section">
@@ -333,11 +368,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 .icon-plus, .icon-search {
                     font-size: 12px;
                 }
+                
+                .group-list-content {
+            min-height: 80px;
+        }
+        .group-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f3f3;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .group-item:hover { background: #f0f7ff; }
+        .group-avatar {
+            width: 36px; height: 36px; border-radius: 50%; margin-right: 12px;
+        }
+        .group-name { font-size: 15px; color: #333; }
+    
+    
             </style>
         `;
 
         // 渲染好友列表
         renderFriendList();
+        // 渲染我加入的群
+        renderMyGroupList();
         // 加载好友申请
         loadFriendRequests();
     });
@@ -409,6 +465,116 @@ document.querySelector('.main-content').addEventListener('click', async (e) => {
             renderFriendList(); // 刷新好友列表
         });
     }
+    if (e.target.classList.contains('create-group-btn') ||
+        (e.target.closest('.create-group-btn') && !e.target.classList.contains('add-friend-btn'))) {
+        const name = prompt('请输入群聊名称:');
+        if (!name) return;
+        fetch('/api/group/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'name=' + encodeURIComponent(name)
+        }).then(res => res.json()).then(result => {
+            if (result.groupId) {
+                alert('创建成功');
+                renderMyGroupList(); // 刷新群列表
+            } else {
+                alert(result.error || '创建失败');
+            }
+        });
+    }
+    if (e.target.classList.contains('join-group-btn') ||
+        (e.target.closest('.join-group-btn') && !e.target.classList.contains('create-group-btn'))) {
+        const modal = document.createElement('div');
+        modal.className = 'join-group-modal';
+        modal.innerHTML = `
+        <div class="join-group-dialog">
+            <div class="join-group-header">加入群聊</div>
+            <div class="join-group-body">
+                <input type="text" class="group-search-input" placeholder="输入群聊名称"/>
+                <button class="group-search-btn">搜索</button>
+                <div class="group-search-result"></div>
+            </div>
+            <button class="close-modal-btn">×</button>
+        </div>
+        <style>
+            .join-group-modal {
+                position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.18); z-index: 9999; display: flex; align-items: center; justify-content: center;
+            }
+            .join-group-dialog {
+                background: #fff; border-radius: 8px; padding: 24px 28px 18px 28px; min-width: 340px; position: relative;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            }
+            .join-group-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+            .group-search-input { width: 70%; margin-right: 8px; }
+            .group-search-btn { padding: 6px 16px; }
+            .group-search-result { margin-top: 16px; }
+            .close-modal-btn {
+                position: absolute; right: 10px; top: 10px; border: none; background: none; font-size: 22px; color: #888; cursor: pointer;
+            }
+            .search-group-item {
+                display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f3f3f3;
+            }
+            .search-group-avatar { width: 36px; height: 36px; border-radius: 50%; margin-right: 12px; }
+            .search-group-name { font-size: 15px; color: #333; flex: 1; }
+            .apply-join-btn { padding: 4px 12px; background: #2196F3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+            .apply-join-btn[disabled] { background: #aaa; cursor: not-allowed; }
+        </style>
+    `;
+        document.body.appendChild(modal);
+
+        modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+
+        modal.querySelector('.group-search-btn').onclick = async function() {
+            const keyword = modal.querySelector('.group-search-input').value.trim();
+            const resultBox = modal.querySelector('.group-search-result');
+            if (!keyword) {
+                resultBox.innerHTML = '<div class="empty-tip">请输入群聊名称</div>';
+                return;
+            }
+            resultBox.innerHTML = '搜索中...';
+            try {
+                const res = await fetch('/api/group/search?keyword=' + encodeURIComponent(keyword));
+                const list = res.ok ? await res.json() : [];
+                if (!list.length) {
+                    resultBox.innerHTML = '<div class="empty-tip">未找到相关群聊</div>';
+                    return;
+                }
+                resultBox.innerHTML = list.map(g => `
+                <div class="search-group-item" data-group-id="${g.id}">
+                    <img src="${g.avatar || 'default-group.png'}" class="search-group-avatar"/>
+                    <div class="search-group-name">${g.name}</div>
+                    <button class="apply-join-btn" data-group-id="${g.id}">申请加入群聊</button>
+                </div>
+            `).join('');
+            } catch {
+                resultBox.innerHTML = '<div class="empty-tip">搜索失败</div>';
+            }
+        };
+
+        // 事件委托：申请加入群聊
+        modal.querySelector('.group-search-result').onclick = function(ev) {
+            const btn = ev.target.closest('.apply-join-btn');
+            if (!btn) return;
+            const groupId = btn.getAttribute('data-group-id');
+            btn.disabled = true;
+            btn.textContent = '申请中...';
+            fetch('/api/friend/add', { // 这里假设你用好友申请接口，需后端区分类型
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: `groupId=${encodeURIComponent(groupId)}&type=group`
+            }).then(r => r.text()).then(msg => {
+                btn.textContent = '已申请';
+                btn.disabled = true;
+                alert(msg);
+            }).catch(() => {
+                btn.textContent = '申请加入群聊';
+                btn.disabled = false;
+                alert('申请失败');
+            });
+        };
+    }
+
 });
 
 // 加载好友申请
@@ -418,22 +584,60 @@ function loadFriendRequests() {
     fetch('/api/friend/requests').then(r => r.json()).then(list => {
         box.innerHTML = '';
         if (list.length === 0) {
-            box.innerHTML = '<div class="empty-tip">暂无好友申请</div>';
+            box.innerHTML = '<div class="empty-tip">暂无好友/群聊申请</div>';
             return;
         }
         list.forEach(u => {
             const div = document.createElement('div');
             div.className = 'friend-request-item';
-            div.innerHTML = `
-                <img src="${u.avatar || 'avatar.png'}" alt="头像" class="request-avatar"/>
-                <div class="request-info">
-                    <div class="request-name">${u.username}</div>
-                    <div class="request-email">${u.email}</div>
-                </div>
-                <button class="accept-btn" data-id="${u.id}">同意</button>
-                <button class="reject-btn" data-id="${u.id}">拒绝</button>
-            `;
+            if (u.type === 'group') {
+                // 群聊申请
+                div.innerHTML = `
+                    <img src="${u.avatar || 'avatar.png'}" alt="头像" class="request-avatar"/>
+                    <div class="request-info">
+                        <div class="request-name">${u.username} 申请加入群聊 (ID:${u.groupId})</div>
+                        <div class="request-email">${u.email}</div>
+                    </div>
+                    <button class="accept-btn" data-id="${u.id}" data-type="group" data-group-id="${u.groupId}">同意</button>
+                    <button class="reject-btn" data-id="${u.id}" data-type="group" data-group-id="${u.groupId}">拒绝</button>
+                `;
+            } else {
+                // 好友申请
+                div.innerHTML = `
+                    <img src="${u.avatar || 'avatar.png'}" alt="头像" class="request-avatar"/>
+                    <div class="request-info">
+                        <div class="request-name">${u.username}</div>
+                        <div class="request-email">${u.email}</div>
+                    </div>
+                    <button class="accept-btn" data-id="${u.id}">同意</button>
+                    <button class="reject-btn" data-id="${u.id}">拒绝</button>
+                `;
+            }
             box.appendChild(div);
         });
     });
 }
+
+// 处理同意/拒绝时，需带上 type 和 groupId
+document.querySelector('.main-content').addEventListener('click', (e) => {
+    if (e.target.classList.contains('accept-btn') || e.target.classList.contains('reject-btn')) {
+        const id = e.target.getAttribute('data-id');
+        const type = e.target.getAttribute('data-type');
+        const groupId = e.target.getAttribute('data-group-id');
+        const action = e.target.classList.contains('accept-btn') ? 'accepted' : 'rejected';
+        let body = `requesterId=${id}&action=${action}`;
+        if (type === 'group') {
+            body += `&type=group&groupId=${groupId}`;
+        }
+        fetch('/api/friend/handle', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body
+        }).then(r => r.text()).then(msg => {
+            alert(msg);
+            loadFriendRequests();
+            renderFriendList();
+            renderMyGroupList && renderMyGroupList();
+        });
+    }
+});

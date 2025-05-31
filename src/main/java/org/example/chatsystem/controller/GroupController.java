@@ -96,4 +96,15 @@ public class GroupController {
         Group group = groupService.createGroup(name, user.getId(), groupAvatar);
         return ResponseEntity.ok(Map.of("groupId", group.getId()));
     }
+
+    // 按名字搜索群聊
+    @GetMapping("/search")
+    public ResponseEntity<?> searchGroup(@RequestParam String keyword, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) return ResponseEntity.status(401).body("未登录");
+        User user = userService.findByUsername(username).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+        List<Group> groups = groupService.searchGroupsByName(keyword);
+        return ResponseEntity.ok(groups);
+    }
 }

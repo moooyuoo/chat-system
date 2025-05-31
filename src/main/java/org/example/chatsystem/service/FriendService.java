@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FriendService {
@@ -66,5 +67,67 @@ public class FriendService {
     public boolean isRequested(Long fromId, Long toId) {
         // 判断是否已发送申请
         return getFriendRequests(toId).stream().anyMatch(u -> u.getId().equals(fromId));
+    }
+
+    public boolean addGroupRequest(Long userId, Long groupId, Long ownerId) {
+        // 检查是否已申请或已在群中
+        String checkSql = "SELECT COUNT(*) FROM group_request WHERE user_id=? AND group_id=? AND status IN ('pending','accepted')";
+        Integer cnt = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, groupId);
+        if (cnt != null && cnt > 0) return false;
+        // 插入群聊申请
+        String insertSql = "INSERT INTO group_request (user_id, group_id, owner_id, status) VALUES (?, ?, ?, 'pending')";
+        jdbcTemplate.update(insertSql, userId, groupId, ownerId);
+        return true;
+    }
+
+    public List<Map<String, Object>> getAllRequests(Long userId) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        // 好友申请
+        String friendSql = "SELECT user_id, 'friend' AS type FROM friend WHERE friend_id=? AND status='pending'";
+        List<Map<String, Object>> friendReqs = jdbcTemplate.queryForList(friendSql, userId);
+        for (Map<String, Object> req : friendReqs) {
+            Long requesterId = ((Number) req.get("user_id")).longValue();
+            userRepository.findById(requesterId).ifPresent(u -> {
+                Map<String, Object> map = Map.of(
+                        "id", u.getId(),
+                        "username", u.getUsername(),
+                        "email", u.getEmail(),
+                        "avatar", u.getAvatar(),
+                        "type", "friend"
+                );
+                result.add(map);
+            });
+        }
+        // 群聊申请（我是群主）
+        String groupSql = "SELECT user_id, group_id FROM group_request WHERE owner_id=? AND status='pending'";
+        List<Map<String, Object>> groupReqs = jdbcTemplate.queryForList(groupSql, userId);
+        for (Map<String, Object> req : groupReqs) {
+            Long requesterId = ((Number) req.get("user_id")).longValue();
+            Long groupId = ((Number) req.get("group_id")).longValue();
+            userRepository.findById(requesterId).ifPresent(u -> {
+                Map<String, Object> map = Map.of(
+                        "id", u.getId(),
+                        "username", u.getUsername(),
+                        "email", u.getEmail(),
+                        "avatar", u.getAvatar(),
+                        "type", "group",
+                        "groupId", groupId
+                );
+                result.add(map);
+            });
+        }
+        return result;
+    }
+
+    public boolean handleGroupRequest(long requesterId, Long groupId, Long ownerId, String action) {
+        String sql = "UPDATE group_request SET status=? WHERE user_id=? AND group_id=? AND owner_id=? AND status='pending'";
+        String status = "accepted".equals(action) ? "accepted" : "rejected";
+        int updated = jdbcTemplate.update(sql, status, requesterId, groupId, ownerId);
+        if (updated > 0 && "accepted".equals(status)) {
+            // 同意后插入 group_member 表
+            String insertSql = "INSERT INTO group_member (group_id, user_id) VALUES (?, ?)";
+            jdbcTemplate.update(insertSql, groupId, requesterId);
+        }
+        return updated > 0;
     }
 }
