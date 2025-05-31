@@ -302,6 +302,55 @@ async function renderGroupChatPanel(group) {
         </style>
     `;
 
+    // 群聊标题点击弹窗成员列表
+    chatArea.querySelector('.wx-chat-title').style.cursor = 'pointer';
+    chatArea.querySelector('.wx-chat-title').onclick = async function() {
+        try {
+            const res = await fetch(`/api/group/${group.id}/members`);
+            if (!res.ok) throw new Error('获取群成员失败');
+            const members = await res.json();
+            // 构建弹窗
+            const modal = document.createElement('div');
+            modal.className = 'group-member-modal';
+            modal.innerHTML = `
+            <div class="group-member-dialog">
+                <div class="group-member-header">群成员列表</div>
+                <div class="group-member-list">
+                    ${members.map(m => `
+                        <div class="group-member-item">
+                            <img src="${m.avatar || 'avatar.png'}" class="group-member-avatar"/>
+                            <span class="group-member-name">${m.nickname || m.username}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <button class="close-modal-btn">×</button>
+            </div>
+            <style>
+                .group-member-modal {
+                    position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+                    background: rgba(0,0,0,0.18); z-index: 9999; display: flex; align-items: center; justify-content: center;
+                }
+                .group-member-dialog {
+                    background: #fff; border-radius: 8px; padding: 24px 28px 18px 28px; min-width: 320px; position: relative;
+                    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+                }
+                .group-member-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+                .group-member-list { max-height: 320px; overflow-y: auto; }
+                .group-member-item { display: flex; align-items: center; margin-bottom: 12px; }
+                .group-member-avatar { width: 32px; height: 32px; border-radius: 50%; margin-right: 10px; }
+                .group-member-name { font-size: 15px; color: #333; }
+                .close-modal-btn {
+                    position: absolute; right: 10px; top: 10px; border: none; background: none; font-size: 22px; color: #888; cursor: pointer;
+                }
+            </style>
+        `;
+            document.body.appendChild(modal);
+            modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+        } catch (e) {
+            alert(e.message);
+        }
+    };
+
     // 查找聊天记录功能
     chatArea.querySelector('.wx-search-msg-btn').onclick = function() {
         // 弹窗结构
