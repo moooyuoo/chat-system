@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>用户登录 - ChatSystem 聊天系统</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f8ff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 20px;
+        }
+        form {
+            margin-top: 10px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            text-align: left;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #388e3c;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img src="logo.png" alt="ChatSystem Logo" class="logo">
+    <h1>ChatSystem 聊天系统</h1>
+    <div class="subtitle">用户登录</div>
+    <form id="loginForm">
+        <label for="username">用户名：</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">密码：</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit">登录</button>
+    </form>
+    <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
+        <button type="button" onclick="window.location.href='register.html'">注册</button>
+        <button type="button" onclick="window.location.href='index.html'">返回</button>
+    </div>
+</div>
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const response = await fetch('/api/user/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            })
+        });
+        const result = await response.text();
+        if (response.ok) {
+            window.location.href = 'chat.html';
+        } else {
+            alert(result);
+        }
+    });
+</script>
+</body>
+</html>

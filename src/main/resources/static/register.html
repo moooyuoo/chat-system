@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Registration</title>
+    <title>用户注册 - ChatSystem 聊天系统</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,19 +18,30 @@
         .container {
             text-align: center;
             background: #ffffff;
-            padding: 30px;
+            padding: 30px 40px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+        }
         h1 {
             color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 20px;
         }
         form {
-            margin-top: 20px;
+            margin-top: 10px;
         }
         label {
             display: block;
             margin: 10px 0 5px;
+            text-align: left;
         }
         input {
             width: 100%;
@@ -54,22 +65,24 @@
 </head>
 <body>
 <div class="container">
-    <h1>Register</h1>
+    <img src="logo.png" alt="ChatSystem Logo" class="logo">
+    <h1>ChatSystem 聊天系统</h1>
+    <div class="subtitle">用户注册</div>
     <form id="registerForm">
-        <label for="username">Username:</label>
+        <label for="username">用户名：</label>
         <input type="text" id="username" name="username" required>
-        <label for="email">Email:</label>
+        <label for="email">邮箱：</label>
         <input type="email" id="email" name="email" required>
-        <label for="password">Password:</label>
+        <label for="password">密码：</label>
         <input type="password" id="password" name="password" required>
-        <button type="submit">Register</button>
+        <button type="submit">注册</button>
     </form>
+
+    <div style="margin-top: 10px;">
+        <button type="button" onclick="window.location.href='index.html'">返回</button>
+    </div>
 </div>
 <script>
-    document.body.addEventListener('click', () => {
-        console.log('🎉 Welcome to ChatSystem! 🎉');
-    });
-
     document.getElementById('registerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const response = await fetch('/api/user/register', {
@@ -83,6 +96,9 @@
         });
         const result = await response.text();
         alert(result);
+        if (response.ok) {
+            window.location.href = 'index.html';
+        }
     });
 </script>
 </body>

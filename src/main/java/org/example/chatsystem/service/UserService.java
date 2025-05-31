@@ -20,4 +20,15 @@ public class UserService {
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
     }
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    @Autowired
+    private FriendService friendService;
+
+    public boolean isFriendOrRequested(Long myId, Long targetId) {
+        return friendService.isFriend(myId, targetId) || friendService.isRequested(myId, targetId);
+    }
+
 }
