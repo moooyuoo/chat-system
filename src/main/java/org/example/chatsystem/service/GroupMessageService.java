@@ -31,17 +31,21 @@ public class GroupMessageService {
     }
 
     // 搜索群聊消息
+    // src/main/java/org/example/chatsystem/service/GroupMessageService.java
     public List<GroupMessage> searchGroupMessages(Long groupId, String date, String keyword) {
-        /*if (date != null && keyword != null) {
-            return groupMessageRepository.findByGroupIdAndTimestampContainingAndContentContaining(groupId, date, keyword);
-        } else if (date != null) {
-            return groupMessageRepository.findByGroupIdAndTimestampContaining(groupId, date);
-        } else if (keyword != null) {
-            return groupMessageRepository.findByGroupIdAndContentContaining(groupId, keyword);
-        } else {
-            return getGroupMessages(groupId);
-        }*/
-
-        return List.of();
+        if ((date == null || date.isBlank()) && (keyword == null || keyword.isBlank())) {
+            // 没有搜索条件，返回全部
+            return groupMessageRepository.findByGroupIdOrderByTimestampAsc(groupId);
+        }
+        if (date != null && !date.isBlank() && keyword != null && !keyword.isBlank()) {
+            // 同时按日期和关键词
+            return groupMessageRepository.findByGroupIdAndDateAndContentLike(groupId, date, "%" + keyword + "%");
+        }
+        if (date != null && !date.isBlank()) {
+            // 只按日期
+            return groupMessageRepository.findByGroupIdAndDate(groupId, date);
+        }
+        // 只按关键词
+        return groupMessageRepository.findByGroupIdAndContentLike(groupId, "%" + keyword + "%");
     }
 }
