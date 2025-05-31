@@ -7,11 +7,17 @@ import org.example.chatsystem.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
     @Autowired
+
     private UserService userService;
 
     @PostMapping("/register")
@@ -19,7 +25,7 @@ public class UserController {
         if (userService.findByUsername(user.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Username already exists");
         }
-        user.setAvatar("default.png");
+        user.setAvatar("logo.png");
         User savedUser = userService.registerUser(user);
         return ResponseEntity.ok(savedUser);
     }
@@ -68,5 +74,61 @@ public class UserController {
             return ResponseEntity.ok().body(null);
         }
         return ResponseEntity.ok(user);
+    }
+
+    // 修改昵称
+    @PostMapping("/update")
+    public ResponseEntity<String> updateUsername(@RequestParam String username, HttpSession session) {
+        String oldUsername = (String) session.getAttribute("username");
+        if (oldUsername == null) return ResponseEntity.status(401).body("未登录");
+        if (userService.findByUsername(username).isPresent()) {
+            return ResponseEntity.badRequest().body("用户名已存在");
+        }
+        Optional<User> userOpt = userService.findByUsername(oldUsername);
+        if (userOpt.isEmpty()) return ResponseEntity.status(404).body("用户不存在");
+        User user = userOpt.get();
+        user.setUsername(username);
+        userService.save(user);
+        session.setAttribute("username", username);
+        return ResponseEntity.ok("昵称修改成功");
+    }
+
+    @PostMapping("/avatar")
+    public ResponseEntity<String> updateAvatar(@RequestParam("avatar") MultipartFile file, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) return ResponseEntity.status(401).body("未登录");
+
+        Optional<User> userOpt = userService.findByUsername(username);
+        if (userOpt.isEmpty()) return ResponseEntity.status(404).body("用户不存在");
+        User user = userOpt.get();
+
+        // 使用项目根目录的绝对路径
+        String dir = System.getProperty("user.dir") + "/src/main/resources/static/avatar/";
+        new File(dir).mkdirs();
+
+        String filename = username + "_" + System.currentTimeMillis() + ".png";
+        File dest = new File(dir + filename);
+        try {
+            file.transferTo(dest);
+            user.setAvatar("/avatar/" + filename);  // 注意这里加了前导/
+            userService.save(user);
+            return ResponseEntity.ok("头像更换成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("头像上传失败：" + e.getMessage());
+        }
+    }
+
+    // 修改密码
+    @PostMapping("/password")
+    public ResponseEntity<String> updatePassword(@RequestParam String password, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) return ResponseEntity.status(401).body("未登录");
+        Optional<User> userOpt = userService.findByUsername(username);
+        if (userOpt.isEmpty()) return ResponseEntity.status(404).body("用户不存在");
+        User user = userOpt.get();
+        user.setPassword(password);
+        userService.save(user);
+        return ResponseEntity.ok("密码修改成功");
     }
 }

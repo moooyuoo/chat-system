@@ -31,4 +31,7 @@ public class UserService {
         return friendService.isFriend(myId, targetId) || friendService.isRequested(myId, targetId);
     }
 
+    public void save(User user) {
+        userRepository.save(user);
+    }
 }

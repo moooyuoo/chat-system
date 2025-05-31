@@ -88,26 +88,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
                 <!-- 查找陌生人部分 -->
-                <div class="friend-section">
-                    <div class="section-header">
-                        <h2 class="section-title">查找用户</h2>
-                    </div>
-                    <div class="search-section">
-                        <div class="search-box">
-                            <input type="text" class="search-input" placeholder="输入用户名或邮箱"/>
-                            <button class="search-btn">
-                                <i class="icon-search"></i> 查找
-                            </button>
-                        </div>
-                        <div class="search-result-title">搜索结果</div>
-                        <div class="stranger-result"></div>
-                    </div>
-                </div>
+<div class="friend-section">
+    <div class="section-header">
+        <h2 class="section-title">查找用户</h2>
+        <div class="search-box-inline">
+            <input type="text" class="search-input" placeholder="输入用户名或邮箱"/>
+            <button class="search-btn">
+                <i class="icon-search"></i> 查找
+            </button>
+        </div>
+    </div>
+    <div class="search-result-title">搜索结果</div>
+    <div class="stranger-result"></div>
+</div>
 
                 <!-- 好友申请部分 -->
                 <div class="friend-section">
                     <div class="section-header">
-                        <h2 class="section-title">好友申请</h2>
+                        <h2 class="section-title">好友及加群申请</h2>
                     </div>
                     <div id="friend-requests" class="requests-list"></div>
                 </div>
@@ -115,278 +113,130 @@ document.addEventListener('DOMContentLoaded', () => {
 
             <style>
                 .friend-container {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 24px;
-                    padding: 20px;
-                }
-                
-                .friend-section {
-                    background: #fff;
-                    border-radius: 12px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                    padding: 20px;
-                }
-                
-                .section-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 16px;
-                    padding-bottom: 12px;
-                    border-bottom: 1px solid #f0f0f0;
-                }
-                
-                .section-title {
-                    font-size: 18px;
-                    font-weight: 600;
-                    color: #333;
-                    margin: 0;
-                }
-                
-                .add-friend-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 8px 16px;
-                    background: #4CAF50;
-                    color: #fff;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    transition: all 0.2s;
-                }
-                
-                .add-friend-btn:hover {
-                    background: #388E3C;
-                    transform: translateY(-1px);
-                }
-                
-                .friend-list {
-                    min-height: 120px;
-                }
-                
-                .friend-items {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                
-                .friend-item {
-                    display: flex;
-                    align-items: center;
-                    padding: 12px;
-                    border-radius: 8px;
-                    transition: all 0.2s;
-                    cursor: pointer;
-                }
-                
-                .friend-item:hover {
-                    background: #f9f9f9;
-                    transform: translateX(2px);
-                }
-                
-                .friend-avatar {
-                    width: 42px;
-                    height: 42px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    margin-right: 12px;
-                    border: 2px solid #f0f0f0;
-                }
-                
-                .friend-info {
-                    display: flex;
-                    flex-direction: column;
-                }
-                
-                .friend-name {
-                    font-size: 15px;
-                    font-weight: 500;
-                    color: #333;
-                }
-                
-                .friend-status {
-                    font-size: 12px;
-                    margin-top: 2px;
-                }
-                
-                .friend-status.online {
-                    color: #4CAF50;
-                }
-                
-                .friend-status.offline {
-                    color: #999;
-                }
-                
-                .empty-tip {
-                    color: #aaa;
-                    text-align: center;
-                    padding: 20px 0;
-                    font-size: 14px;
-                }
-                
-                .search-section {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                
-                .search-box {
-                    display: flex;
-                    gap: 10px;
-                }
-                
-                .search-input {
-                    flex: 1;
-                    padding: 10px 14px;
-                    border: 1px solid #e0e0e0;
-                    border-radius: 6px;
-                    font-size: 14px;
-                    transition: all 0.2s;
-                }
-                
-                .search-input:focus {
-                    border-color: #4CAF50;
-                    outline: none;
-                    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-                }
-                
-                .search-btn {
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    padding: 0 16px;
-                    background: #2196F3;
-                    color: #fff;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    transition: all 0.2s;
-                }
-                
-                .search-btn:hover {
-                    background: #1976D2;
-                }
-                
-                .search-result-title {
-                    font-size: 15px;
-                    font-weight: 500;
-                    color: #555;
-                    margin-top: 8px;
-                }
-                
-                .stranger-result {
-                    min-height: 60px;
-                    background: #fafafa;
-                    border-radius: 8px;
-                    padding: 16px;
-                    margin-top: 8px;
-                }
-                
-                .stranger-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                
-                .stranger-avatar {
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                }
-                
-                .stranger-name {
-                    flex: 1;
-                    font-size: 14px;
-                    color: #333;
-                }
-                
-                .requests-list {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                
-                .friend-request-item {
-                    display: flex;
-                    align-items: center;
-                    padding: 12px;
-                    background: #fff;
-                    border-radius: 8px;
-                    border: 1px solid #f0f0f0;
-                }
-                
-                .request-avatar {
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    margin-right: 12px;
-                }
-                
-                .request-name {
-                    flex: 1;
-                    font-size: 14px;
-                    color: #333;
-                }
-                
-                .accept-btn, .reject-btn {
-                    padding: 6px 12px;
-                    border: none;
-                    border-radius: 4px;
-                    cursor: pointer;
-                    font-size: 13px;
-                    transition: all 0.2s;
-                    margin-left: 8px;
-                }
-                
-                .accept-btn {
-                    background: #4CAF50;
-                    color: #fff;
-                }
-                
-                .accept-btn:hover {
-                    background: #388E3C;
-                }
-                
-                .reject-btn {
-                    background: #f44336;
-                    color: #fff;
-                }
-                
-                .reject-btn:hover {
-                    background: #d32f2f;
-                }
-                
-                .icon-plus, .icon-search {
-                    font-size: 12px;
-                }
-                
-                .group-list-content {
-            min-height: 80px;
-        }
-        .group-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f3f3f3;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .group-item:hover { background: #f0f7ff; }
-        .group-avatar {
-            width: 36px; height: 36px; border-radius: 50%; margin-right: 12px;
-        }
-        .group-name { font-size: 15px; color: #333; }
-    
-    
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    padding: 32px 24px;
+    background: linear-gradient(120deg, #f0f7fa 0%, #f9e7ff 100%);
+    min-height: 100vh;
+}
+.friend-section {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(33,150,243,0.10);
+    padding: 28px 24px;
+    transition: box-shadow 0.2s;
+}
+.friend-section:hover {
+    box-shadow: 0 8px 32px rgba(33,150,243,0.16);
+}
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1.5px solid #f0f0f0;
+}
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2196F3;
+    margin: 0;
+    letter-spacing: 1px;
+}
+.add-friend-btn, .create-group-btn, .join-group-btn, .search-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 20px;
+    background: linear-gradient(90deg, #4CAF50 60%, #2196F3 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+    transition: background 0.2s, transform 0.2s;
+}
+.add-friend-btn:hover, .create-group-btn:hover, .join-group-btn:hover, .search-btn:hover {
+    background: linear-gradient(90deg, #388E3C 60%, #1976D2 100%);
+    transform: translateY(-2px) scale(1.03);
+}
+.friend-avatar, .group-avatar, .stranger-avatar, .request-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 14px;
+    border: 2.5px solid #e3f2fd;
+    box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+}
+.friend-item, .group-item {
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    border-radius: 10px;
+    transition: background 0.2s, transform 0.2s;
+    cursor: pointer;
+}
+.friend-item:hover, .group-item:hover {
+    background: #f0f7ff;
+    transform: translateX(3px) scale(1.01);
+}
+.search-input, .group-search-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 15px;
+    box-shadow: 0 1px 4px rgba(33,150,243,0.04) inset;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.search-input:focus, .group-search-input:focus {
+    border-color: #2196F3;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(33,150,243,0.10);
+}
+.empty-tip, .error-tip {
+    color: #bdbdbd;
+    text-align: center;
+    padding: 24px 0;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+.error-tip { color: #f44336; }
+.accept-btn, .reject-btn, .apply-join-btn {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    margin-left: 10px;
+    transition: background 0.2s;
+}
+.accept-btn, .apply-join-btn { background: #4CAF50; color: #fff; }
+.accept-btn:hover, .apply-join-btn:hover { background: #388E3C; }
+.reject-btn { background: #f44336; color: #fff; }
+.reject-btn:hover { background: #d32f2f; }
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.section-header .search-box-inline {
+    margin-left: auto;
+    justify-content: flex-end;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 420px; /* 可选，限制输入框宽度 */
+}
             </style>
         `;
 
@@ -519,6 +369,15 @@ document.querySelector('.main-content').addEventListener('click', async (e) => {
             .search-group-name { font-size: 15px; color: #333; flex: 1; }
             .apply-join-btn { padding: 4px 12px; background: #2196F3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
             .apply-join-btn[disabled] { background: #aaa; cursor: not-allowed; }
+            
+            .search-box-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-header .search-box-inline {
+    margin-left: auto;
+}
         </style>
     `;
         document.body.appendChild(modal);
