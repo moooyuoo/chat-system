@@ -25,6 +25,7 @@ async function renderFriendList() {
                 </li>
             `).join('')}
         </ul>`;
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -25,4 +25,9 @@ public class MessageService {
         // timestamp 默认当前时间
         return privateMessageRepository.save(msg);
     }
+
+    public List<PrivateMessage> searchMessages(Long userId, Long friendId, String date, String keyword) {
+        // 构建动态查询条件
+        return privateMessageRepository.searchMessages(userId, friendId, date, keyword);
+    }
 }

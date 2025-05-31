@@ -102,4 +102,36 @@ public class MessageController {
             return ResponseEntity.internalServerError().body(Map.of("error", "服务器内部错误"));
         }
     }
+    @GetMapping("/search")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> searchMessages(
+            @RequestParam Long friendId,
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String keyword,
+            HttpSession session) {
+        try {
+            String username = (String) session.getAttribute("username");
+            if (username == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "请先登录"));
+            }
+            User user = userService.findByUsername(username)
+                    .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+
+            var messages = messageService.searchMessages(user.getId(), friendId, date, keyword);
+
+            var msgList = messages.stream().map(msg -> Map.of(
+                    "id", msg.getId(),
+                    "content", msg.getContent(),
+                    "sender_id", msg.getSenderId(),
+                    "receiver_id", msg.getReceiverId(),
+                    "timestamp", msg.getTimestamp()
+            )).toList();
+
+            return ResponseEntity.ok(msgList);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "服务器内部错误"));
+        }
+    }
 }

@@ -103,15 +103,25 @@ async function renderChatPanel(friend) {
     chatArea.innerHTML = `
         <div class="wx-chat-container">
             <div class="wx-chat-header">
-                <img src="${friend.avatar || 'avatar.png'}" class="wx-chat-avatar"/>
-                <span class="wx-chat-title">${friend.username}</span>
-            </div>
+    <div class="wx-chat-header-content">
+        <img src="${friend.avatar || 'avatar.png'}" class="wx-chat-avatar"/>
+        <span class="wx-chat-title">${friend.username}</span>
+        <button class="wx-search-msg-btn" title="查找聊天记录">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="2"/>
+                <line x1="14.2" y1="14.2" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="btn-text">查找聊天记录</span>
+        </button>
+    </div>
+</div>
             <div class="wx-chat-messages" id="chat-messages"></div>
             <div class="wx-chat-input-area">
                 <textarea class="wx-chat-input" placeholder="请输入消息..."></textarea>
                 <button class="wx-send-btn">发送</button>
             </div>
         </div>
+        
         <style>
             .wx-chat-container {
                 display: flex;
@@ -165,7 +175,7 @@ async function renderChatPanel(friend) {
                 border-radius: 4px;
             }
             .wx-msg-bubble {
-                max-width: 60%;
+                max-width: 80%;
                 padding: 10px 16px;
                 border-radius: 6px;
                 font-size: 15px;
@@ -229,8 +239,171 @@ async function renderChatPanel(friend) {
     padding-left: 2px;
     padding-right: 0;
 }
+ .wx-chat-header {
+        background: #f7f7f7;
+        border-bottom: 1px solid #e0e0e0;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+    }
+    
+    .wx-chat-header-content {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        position: relative;
+    }
+    
+    .wx-chat-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        margin-right: 12px;
+    }
+    
+    .wx-chat-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #222;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .wx-search-msg-btn {
+        margin-left: auto;
+        background: transparent;
+        color: #2196F3;
+        border: 1px solid rgba(33, 150, 243, 0.3);
+        border-radius: 18px;
+        padding: 6px 12px;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+        height: 32px;
+    }
+    
+    .wx-search-msg-btn:hover {
+        background: rgba(33, 150, 243, 0.08);
+        border-color: rgba(33, 150, 243, 0.5);
+    }
+    
+    .wx-search-msg-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .btn-text {
+        margin-top: 1px; /* 微调文字对齐 */
+    }
+    
+    @media (max-width: 480px) {
+        .btn-text {
+            display: none; /* 小屏幕隐藏文字 */
+        }
+        .wx-search-msg-btn {
+            padding: 6px;
+            border-radius: 50%;
+        }
+    }
         </style>
     `;
+
+    // 在 renderChatPanel(friend) 内部添加
+    chatArea.querySelector('.wx-search-msg-btn').onclick = function () {
+        // 弹窗结构
+        const modal = document.createElement('div');
+        modal.className = 'chat-search-modal';
+        modal.innerHTML = `
+        <div class="chat-search-dialog">
+            <div class="chat-search-header">查找聊天记录</div>
+            <div class="chat-search-body">
+                <input type="date" class="search-date" />
+                <input type="text" class="search-keyword" placeholder="输入内容关键词" />
+                <button class="do-search-btn">查找</button>
+                <button class="download-btn" disabled>下载聊天记录</button>
+                <div class="search-result-list"></div>
+            </div>
+            <button class="close-modal-btn">×</button>
+        </div>
+        <style>
+            .chat-search-modal {
+                position: fixed; left: 0; top: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.18); z-index: 9999; display: flex; align-items: center; justify-content: center;
+            }
+            .chat-search-dialog {
+                background: #fff; border-radius: 8px; padding: 24px 28px 18px 28px; min-width: 340px; position: relative;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+            }
+            .chat-search-header { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+            .chat-search-body input { margin-right: 8px; margin-bottom: 8px; }
+            .do-search-btn, .download-btn { margin-right: 8px; }
+            .search-result-list { margin-top: 12px; max-height: 260px; overflow-y: auto; font-size: 14px; }
+            .close-modal-btn {
+                position: absolute; right: 10px; top: 10px; border: none; background: none; font-size: 22px; color: #888; cursor: pointer;
+            }
+        </style>
+    `;
+        document.body.appendChild(modal);
+
+        // 关闭弹窗
+        modal.querySelector('.close-modal-btn').onclick = () => modal.remove();
+
+        // 查找按钮事件
+        const resultList = modal.querySelector('.search-result-list');
+        let lastResult = [];
+        modal.querySelector('.do-search-btn').onclick = async function () {
+            const date = modal.querySelector('.search-date').value;
+            const keyword = modal.querySelector('.search-keyword').value.trim();
+            let url = `/api/message/search?friendId=${friend.id}`;
+            if (date) url += `&date=${date}`;
+            if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+            resultList.innerHTML = '查找中...';
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('查找失败');
+                const list = await res.json();
+                lastResult = list;
+                modal.querySelector('.download-btn').disabled = list.length === 0;
+                if (list.length === 0) {
+                    resultList.innerHTML = '<div style="color:#aaa;">无匹配记录</div>';
+                    return;
+                }
+                resultList.innerHTML = list.map(msg => {
+                    const date = new Date(msg.timestamp);
+                    date.setHours(date.getHours() + 8);
+                    const timeStr = date.toLocaleString('zh-CN', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    const sender = msg.sender_id === currentUser.id ? '我' : friend.username;
+                    return `<div style="margin-bottom:8px;"><b>${sender}</b> <span style="color:#888;">[${timeStr}]</span><br/>${msg.content}</div>`;
+                }).join('');
+            } catch (e) {
+                resultList.innerHTML = `<span style="color:red;">${e.message}</span>`;
+                modal.querySelector('.download-btn').disabled = true;
+            }
+        };
+
+        // 下载按钮事件
+        modal.querySelector('.download-btn').onclick = function () {
+            if (!lastResult.length) return;
+            const lines = lastResult.map(msg => {
+                const date = new Date(msg.timestamp);
+                date.setHours(date.getHours() + 8);
+                const timeStr = date.toLocaleString('zh-CN', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                const sender = msg.sender_id === currentUser.id ? '我' : friend.username;
+                return `[${timeStr}] ${sender}: ${msg.content}`;
+            });
+            const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `聊天记录_${friend.username}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        };
+    };
 
     // 加载历史消息
     fetch(`/api/message/list?friendId=${friend.id}`)
