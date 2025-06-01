@@ -20,7 +20,7 @@ async function renderSettingsPage() {
             </div>
             <div class="settings-actions">
                 <button class="edit-nickname-btn">修改昵称</button>
-                <button class="edit-avatar-btn">更换头像</button>
+                <!--<button class="edit-avatar-btn">更换头像</button>-->
                 <button class="edit-password-btn">修改密码</button>
             </div>
             <p style="color:#888;margin-top:18px;">更多功能敬请期待。</p>

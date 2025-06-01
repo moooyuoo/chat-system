@@ -34,4 +34,8 @@ public class UserService {
     public void save(User user) {
         userRepository.save(user);
     }
+
+    public Optional<User> findById(Long senderId) {
+        return userRepository.findById(senderId);
+    }
 }

@@ -25,6 +25,7 @@ public class PrivateMessage {
     private OffsetDateTime timestamp = OffsetDateTime.now(ZoneOffset.ofHours(8));
     public PrivateMessage() {}
 
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getSenderId() { return senderId; }
