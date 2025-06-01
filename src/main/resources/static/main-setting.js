@@ -20,7 +20,7 @@ async function renderSettingsPage() {
             </div>
             <div class="settings-actions">
                 <button class="edit-nickname-btn">修改昵称</button>
-                <!--<button class="edit-avatar-btn">更换头像</button>-->
+                <button class="edit-avatar-btn">更换头像</button>
                 <button class="edit-password-btn">修改密码</button>
             </div>
             <p style="color:#888;margin-top:18px;">更多功能敬请期待。</p>
@@ -64,7 +64,16 @@ async function renderSettingsPage() {
                 body: formData
             });
             alert(await res.text());
-            renderSettingsPage();
+
+            // 头像上传成功后，刷新所有头像
+            document.querySelectorAll('.user-avatar').forEach(img => {
+                img.src = (img.src.split('?')[0]) + '?t=' + Date.now();
+            });
+
+            if (avatarImg) {
+                // 加时间戳防止缓存
+                avatarImg.src = (avatarImg.src.split('?')[0]) + '?t=' + Date.now();
+            }
         };
         input.click();
     };

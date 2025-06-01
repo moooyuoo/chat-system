@@ -88,7 +88,7 @@ async function renderGroupChatPanel(group) {
         <div class="wx-chat-container">
             <div class="wx-chat-header">
                 <div class="wx-chat-header-content">
-                    <img src="${group.icon || 'group-icon.png'}" class="wx-chat-avatar"/>
+                    <img src="${group.icon || 'default-group.png'}" class="wx-chat-avatar"/>
                     <span class="wx-chat-title">${group.name}</span>
                     <button class="wx-search-msg-btn" title="查找聊天记录">
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
