@@ -1,7 +1,9 @@
 // 全局变量存储当前群聊信息
 let currentGroup = null;
-let messagePollingInterval = null; // 轮询定时器
-const POLLING_INTERVAL = 3000; // 轮询间隔3秒
+
+// 新增全局变量
+let groupPollingTimer = null;
+let currentPollingGroupId = null;
 
 // 渲染群聊主界面
 async function renderGroupMain() {
@@ -77,79 +79,6 @@ async function loadGroupList() {
     });
 }
 
-// 开始消息轮询
-function startMessagePolling(groupId) {
-    // 先清除已有的轮询
-    if (messagePollingInterval) {
-        clearInterval(messagePollingInterval);
-    }
-
-    let lastMessageTime = Date.now(); // 记录最后一次收到消息的时间
-
-    // 设置新的轮询
-    messagePollingInterval = setInterval(async () => {
-        try {
-            const res = await fetch(`/api/group/message/new?groupId=${groupId}&after=${lastMessageTime}`);
-            if (!res.ok) throw new Error('获取新消息失败');
-            const newMessages = await res.json();
-
-            if (newMessages && newMessages.length > 0) {
-                // 更新最后消息时间
-                lastMessageTime = Math.max(...newMessages.map(m => new Date(m.timestamp).getTime()), lastMessageTime);
-
-                // 渲染新消息
-                renderNewMessages(newMessages);
-            }
-        } catch (error) {
-            console.error('轮询消息出错:', error);
-        }
-    }, POLLING_INTERVAL);
-}
-
-// 渲染新消息
-function renderNewMessages(messages) {
-    if (!currentGroup || !messages || messages.length === 0) return;
-
-    const msgBox = document.getElementById('group-chat-messages');
-    if (!msgBox) return;
-
-    messages.forEach(msg => {
-        const isSelf = msg.sender_id === currentUser.id;
-        const date = new Date(msg.timestamp);
-        date.setHours(date.getHours());
-        const timeStr = date.toLocaleString('zh-CN', {
-            hour12: false,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-
-        const msgElement = document.createElement('div');
-        msgElement.className = `wx-msg-row ${isSelf ? 'wx-msg-row-self' : 'wx-msg-row-other'}`;
-        msgElement.innerHTML = isSelf ? `
-            <div>
-                <div class="wx-msg-bubble">${msg.content}</div>
-                <div class="wx-msg-time">${timeStr}</div>
-            </div>
-            <img src="${currentUser.avatar || 'avatar.png'}" class="wx-msg-avatar"/>
-        ` : `
-            <img src="${msg.sender_avatar || 'avatar.png'}" class="wx-msg-avatar"/>
-            <div>
-                <div class="wx-msg-sender">${msg.sender_name || '群成员'}</div>
-                <div class="wx-msg-bubble">${msg.content}</div>
-                <div class="wx-msg-time">${timeStr}</div>
-            </div>
-        `;
-
-        msgBox.appendChild(msgElement);
-    });
-
-    // 滚动到底部
-    msgBox.scrollTop = msgBox.scrollHeight;
-}
-
 // 渲染群聊界面
 async function renderGroupChatPanel(group) {
     // 确保已获取当前用户信息
@@ -158,6 +87,70 @@ async function renderGroupChatPanel(group) {
     }
 
     currentGroup = group;
+    currentPollingGroupId = group.id;
+
+    // 定义加载消息的函数
+    async function loadGroupMessages() {
+        try {
+            const res = await fetch(`/api/group/message/list?groupId=${group.id}`);
+            if (!res.ok) throw new Error('获取消息失败');
+            const list = await res.json();
+            const msgBox = document.getElementById('group-chat-messages');
+            msgBox.innerHTML = '';
+            list.forEach(msg => {
+                const isSelf = msg.sender_id === currentUser.id;
+                const date = new Date(msg.timestamp);
+                date.setHours(date.getHours() );
+                const timeStr = date.toLocaleString('zh-CN', {
+                    hour12: false,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                msgBox.innerHTML += `
+                    <div class="wx-msg-row ${isSelf ? 'wx-msg-row-self' : 'wx-msg-row-other'}">
+                        ${isSelf ? `
+                            <div>
+                                <div class="wx-msg-bubble">${msg.content}</div>
+                                <div class="wx-msg-time">${timeStr}</div>
+                            </div>
+                            <img src="${currentUser.avatar || 'avatar.png'}" class="wx-msg-avatar"/>
+                        ` : `
+                            <img src="${msg.sender_avatar || 'avatar.png'}" class="wx-msg-avatar"/>
+                            <div>
+                                <div class="wx-msg-sender">${msg.sender_name || '群成员'}</div>
+                                <div class="wx-msg-bubble">${msg.content}</div>
+                                <div class="wx-msg-time">${timeStr}</div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            });
+            msgBox.scrollTop = msgBox.scrollHeight;
+        } catch (error) {
+            console.error('加载消息失败:', error);
+            // 可选：alert('加载消息失败: ' + error.message);
+        }
+    }
+
+    // 首次加载
+    await loadGroupMessages();
+
+    // 清除上一个定时器
+    if (groupPollingTimer) {
+        clearInterval(groupPollingTimer);
+        groupPollingTimer = null;
+    }
+
+    // 启动定时轮询，每3秒拉取一次
+    groupPollingTimer = setInterval(() => {
+        if (currentPollingGroupId === group.id) {
+            loadGroupMessages();
+        }
+    }, 3000);
+
     const chatArea = document.getElementById('group-chat-area');
     chatArea.innerHTML = `
         <div class="wx-chat-container">
@@ -559,9 +552,6 @@ async function renderGroupChatPanel(group) {
                 `;
             });
             msgBox.scrollTop = msgBox.scrollHeight;
-
-            // 启动消息轮询
-            startMessagePolling(group.id);
         })
         .catch(error => {
             console.error('加载消息失败:', error);
@@ -603,29 +593,9 @@ async function renderGroupChatPanel(group) {
                 if (!msg || !msg.content) {
                     throw new Error('无效的响应格式');
                 }
-                // 追加新消息
-                const msgBox = document.getElementById('group-chat-messages');
-                const date = new Date(msg.timestamp);
-                date.setHours(date.getHours() );
-                const timeStr = date.toLocaleString('zh-CN', {
-                    hour12: false,
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                msgBox.innerHTML += `
-                    <div class="wx-msg-row wx-msg-row-self">
-                        <div>
-                            <div class="wx-msg-bubble">${msg.content}</div>
-                            <div class="wx-msg-time">${timeStr}</div>
-                        </div>
-                        <img src="${currentUser.avatar || 'avatar.png'}" class="wx-msg-avatar"/>
-                    </div>
-                `;
                 input.value = '';
-                msgBox.scrollTop = msgBox.scrollHeight;
+                // 发送后刷新消息
+                loadGroupMessages();
             })
             .catch(error => {
                 console.error('发送消息失败:', error);
@@ -645,17 +615,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     const groupBtn = sidebarBtns[3]; // 假设群聊按钮是第4个
 
     groupBtn.addEventListener('click', async () => {
-        // 清除之前的轮询
-        if (messagePollingInterval) {
-            clearInterval(messagePollingInterval);
-            messagePollingInterval = null;
-        }
-
         sidebarBtns.forEach(btn => btn.classList.remove('active'));
         groupBtn.classList.add('active');
+        if (groupPollingTimer) {
+            clearInterval(groupPollingTimer);
+            groupPollingTimer = null;
+            currentPollingGroupId = null;
+        }
         await renderGroupMain();
     });
 });
+
 /*
 // 全局变量存储当前群聊信息
 let currentGroup = null;
