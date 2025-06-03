@@ -77,18 +77,20 @@ async function renderSettingsPage() {
                 }
             } catch {}
 
-            // 刷新所有头像
+            // 强制刷新所有头像
             document.querySelectorAll('.user-avatar').forEach(img => {
-                img.src = (newAvatar || img.src.split('?')[0]) + '?t=' + Date.now();
+                img.src = newAvatar + '?t=' + Date.now();
             });
             // 刷新侧边栏头像
             const sidebarAvatar = document.querySelector('.avatar-box img');
             if (sidebarAvatar) {
-                sidebarAvatar.src = (newAvatar || sidebarAvatar.src.split('?')[0]) + '?t=' + Date.now();
+                sidebarAvatar.src = newAvatar + '?t=' + Date.now();
             }
-            // 如有其他区域用到头像，也可在此刷新
+            // 可选：刷新设置页
+            renderSettingsPage();
 
-            await renderSettingsPage(); // 可选：刷新设置页
+            // 更换头像成功后
+            window.avatarUpdateTime = Date.now();
         };
         input.click();
     };
