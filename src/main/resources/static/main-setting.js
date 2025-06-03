@@ -88,7 +88,7 @@ async function renderSettingsPage() {
             }
             // 如有其他区域用到头像，也可在此刷新
 
-            renderSettingsPage(); // 可选：刷新设置页
+            await renderSettingsPage(); // 可选：刷新设置页
         };
         input.click();
     };

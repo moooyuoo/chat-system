@@ -1,32 +1,38 @@
 // src/main/resources/static/main-friend.js
 // 提取渲染好友列表为独立函数
 async function renderFriendList() {
-    let friends = [];
+    let grouped = {};
     try {
-        const res = await fetch('/api/friend/list');
+        const res = await fetch('/api/friend/pagelist');
         if (res.ok) {
-            friends = await res.json();
+            grouped = await res.json();
         }
     } catch {}
     const friendListDiv = document.querySelector('.friend-list-content');
     if (!friendListDiv) return;
-    friendListDiv.innerHTML = friends.length === 0
-        ? '<div class="empty-tip">暂无好友</div>'
-        : `<ul class="friend-items">
-            ${friends.map(f => `
-                <li class="friend-item">
-                    <img src="${f.avatar || 'avatar.png'}" alt="头像" class="friend-avatar"/>
-                    <div class="friend-info">
-                        <span class="friend-name">${f.username}</span>
-                        <span class="friend-status ${f.online ? 'online' : 'offline'}">
-                            ${f.online ? '在线' : '离线'}
-                        </span>
-                    </div>
-                </li>
-            `).join('')}
-        </ul>`;
-
+    if (!grouped || Object.keys(grouped).length === 0) {
+        friendListDiv.innerHTML = '<div class="empty-tip">暂无好友</div>';
+        return;
+    }
+    friendListDiv.innerHTML = Object.entries(grouped).map(([group, friends]) => `
+        <div class="friend-group-block">
+            <div class="friend-group-title">${group}</div>
+            <ul class="friend-items">
+                ${friends.map(f => `
+                    <li class="friend-item" data-id="${f.id}">
+                        <img src="${f.avatar || 'avatar.png'}" alt="头像" class="friend-avatar"/>
+                        <div class="friend-info">
+                            <span class="friend-name">${f.username}</span>
+                        </div>
+                        <button class="group-friend-btn friend-action-btn" data-id="${f.id}">分组</button>
+<button class="delete-friend-btn friend-action-btn" data-id="${f.id}">删除</button>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+    `).join('');
 }
+
 async function renderMyGroupList() {
     const groupBox = document.querySelector('.group-list-content');
     groupBox.innerHTML = '加载中...';
@@ -237,6 +243,37 @@ document.addEventListener('DOMContentLoaded', () => {
     gap: 8px;
     max-width: 420px; /* 可选，限制输入框宽度 */
 }
+.friend-group-block { margin-bottom: 18px; }
+.friend-group-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #4CAF50;
+    margin-bottom: 8px;
+    margin-top: 12px;
+}
+.friend-action-btn {
+    margin-left: 10px;
+    padding: 7px 16px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #2196F3 60%, #4CAF50 100%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(33,150,243,0.08);
+    transition: background 0.2s, transform 0.2s;
+}
+.friend-action-btn:hover {
+    background: linear-gradient(90deg, #1976D2 60%, #388E3C 100%);
+    transform: translateY(-2px) scale(1.04);
+}
+.delete-friend-btn {
+    background: linear-gradient(90deg, #f44336 60%, #ff9800 100%);
+}
+.delete-friend-btn:hover {
+    background: linear-gradient(90deg, #d32f2f 60%, #ff5722 100%);
+}
             </style>
         `;
 
@@ -434,6 +471,42 @@ document.querySelector('.main-content').addEventListener('click', async (e) => {
         };
     }
 
+    // 删除好友
+    if (e.target.classList.contains('delete-friend-btn')) {
+        const friendId = e.target.getAttribute('data-id');
+        if (!confirm('确定要删除该好友吗？')) return;
+        const res = await fetch('/api/friend/delete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `friendId=${encodeURIComponent(friendId)}`
+        });
+        const msg = await res.text();
+        alert(msg);
+        renderFriendList();
+    }
+    // 好友分组
+    if (e.target.classList.contains('group-friend-btn')) {
+        const friendId = e.target.getAttribute('data-id');
+        // 获取分组列表
+        const res = await fetch('/api/friend/group/list');
+        const groups = res.ok ? await res.json() : [];
+        let groupName = prompt('请输入分组名（已有分组：' + groups.map(g => g.name).join('，') + '）：');
+        if (!groupName) return;
+        // 可选：如果分组不存在，先创建
+        await fetch('/api/friend/group/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `name=${encodeURIComponent(groupName)}`
+        });
+        // 设置好友分组
+        await fetch('/api/friend/group/set', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `friendId=${encodeURIComponent(friendId)}&groupName=${encodeURIComponent(groupName)}`
+        });
+        alert('分组设置成功');
+        renderFriendList();
+    }
 });
 
 // 加载好友申请

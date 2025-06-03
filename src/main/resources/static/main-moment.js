@@ -1,12 +1,4 @@
 // 朋友圈功能：发布朋友圈、展示自己和好友的朋友圈
-
-async function fetchCurrentUser() {
-    // 获取当前用户信息
-    const res = await fetch('/api/user/current');
-    if (!res.ok) return null;
-    return await res.json();
-}
-
 async function fetchFriendMoments() {
     // 获取自己和好友的朋友圈
     const res = await fetch('/api/moment/list');

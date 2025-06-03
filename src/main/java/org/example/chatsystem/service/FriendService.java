@@ -130,4 +130,74 @@ public class FriendService {
         }
         return updated > 0;
     }
+    public boolean deleteFriend(long userId, long friendId) {
+    // 删除双方的好友关系
+    String sql = "DELETE FROM friend WHERE ((user_id=? AND friend_id=?) OR (user_id=? AND friend_id=?)) AND status='accepted'";
+    int updated = jdbcTemplate.update(sql, userId, friendId, friendId, userId);
+    return updated > 0;
+}
+
+// 获取分组列表
+public List<Map<String, Object>> getFriendGroups(long userId) {
+    String sql = "SELECT id, name FROM friend_group WHERE user_id=?";
+    return jdbcTemplate.queryForList(sql, userId);
+}
+
+// 新增分组
+public boolean addFriendGroup(long userId, String name) {
+    // 检查是否已存在
+    String checkSql = "SELECT COUNT(*) FROM friend_group WHERE user_id=? AND name=?";
+    Integer cnt = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, name);
+    if (cnt != null && cnt > 0) return false;
+    String sql = "INSERT INTO friend_group (user_id, name) VALUES (?, ?)";
+    jdbcTemplate.update(sql, userId, name);
+    return true;
+}
+
+// 设置好友分组
+public boolean setFriendGroup(long userId, long friendId, String groupName) {
+    // 查找分组id
+    String groupSql = "SELECT id FROM friend_group WHERE user_id=? AND name=?";
+    List<Long> groupIds = jdbcTemplate.queryForList(groupSql, Long.class, userId, groupName);
+    Long groupId;
+    if (groupIds.isEmpty()) {
+        // 自动创建分组
+        String insertSql = "INSERT INTO friend_group (user_id, name) VALUES (?, ?)";
+        jdbcTemplate.update(insertSql, userId, groupName);
+        groupId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+    } else {
+        groupId = groupIds.get(0);
+    }
+    // 更新好友表
+    String sql = "UPDATE friend SET group_id=? WHERE ((user_id=? AND friend_id=?) OR (user_id=? AND friend_id=?)) AND status='accepted'";
+    int updated = jdbcTemplate.update(sql, groupId, userId, friendId, friendId, userId);
+    return updated > 0;
+}
+
+public Map<String, List<User>> getGroupedFriends(long userId) {
+    // 查询所有分组
+    String groupSql = "SELECT id, name FROM friend_group WHERE user_id=?";
+    List<Map<String, Object>> groups = jdbcTemplate.queryForList(groupSql, userId);
+    Map<Long, String> groupIdNameMap = new java.util.HashMap<>();
+    for (var g : groups) groupIdNameMap.put(((Number)g.get("id")).longValue(), (String)g.get("name"));
+
+    // 查询所有好友及分组
+    String sql = "SELECT * FROM friend WHERE (user_id=? OR friend_id=?) AND status='accepted'";
+    List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, userId, userId);
+
+    Map<String, List<User>> result = new java.util.LinkedHashMap<>();
+    result.put("默认分组", new java.util.ArrayList<>());
+    for (var g : groupIdNameMap.values()) result.put(g, new java.util.ArrayList<>());
+
+    for (var row : rows) {
+        long uid1 = ((Number) row.get("user_id")).longValue();
+        long uid2 = ((Number) row.get("friend_id")).longValue();
+        long friendId = (uid1 == userId) ? uid2 : uid1;
+        Long groupId = row.get("group_id") == null ? null : ((Number)row.get("group_id")).longValue();
+        String groupName = groupId != null && groupIdNameMap.containsKey(groupId) ? groupIdNameMap.get(groupId) : "默认分组";
+        userRepository.findById(friendId).ifPresent(u -> result.get(groupName).add(u));
+    }
+    return result;
+}
+
 }
