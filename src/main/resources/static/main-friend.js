@@ -27,6 +27,8 @@ async function renderFriendList() {
         </ul>`;
 
 }
+
+// 获取群聊列表
 async function renderMyGroupList() {
     const groupBox = document.querySelector('.group-list-content');
     groupBox.innerHTML = '加载中...';
@@ -47,6 +49,7 @@ async function renderMyGroupList() {
         groupBox.innerHTML = '<div class="empty-tip">加载失败</div>';
     }
 }
+
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarBtns = document.querySelectorAll('.sidebar-btn');
     const mainContent = document.querySelector('.main-content');

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,17 +85,44 @@ public class GroupController {
     }
 
     // 创建群聊
+//    @PostMapping("/create")
+//    public ResponseEntity<?> createGroup(
+//            @RequestParam String name,
+//            @RequestParam(required = false) String groupAvatar,
+//            HttpSession session) {
+//        String username = (String) session.getAttribute("username");
+//        if (username == null) return ResponseEntity.status(401).body("未登录");
+//        User user = userService.findByUsername(username).orElse(null);
+//        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+//        Group group = groupService.createGroup(name, user.getId(), groupAvatar);
+//        return ResponseEntity.ok(Map.of("groupId", group.getId()));
+//    }
+    // 创建群聊
     @PostMapping("/create")
     public ResponseEntity<?> createGroup(
             @RequestParam String name,
             @RequestParam(required = false) String groupAvatar,
             HttpSession session) {
+
+        // 检查用户是否登录
         String username = (String) session.getAttribute("username");
-        if (username == null) return ResponseEntity.status(401).body("未登录");
+        if (username == null) {
+            return ResponseEntity.status(401).body("未登录");
+        }
+
+        // 检查用户是否存在
         User user = userService.findByUsername(username).orElse(null);
-        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+        if (user == null) {
+            return ResponseEntity.status(404).body("用户不存在");
+        }
+
+        // 创建群组
         Group group = groupService.createGroup(name, user.getId(), groupAvatar);
-        return ResponseEntity.ok(Map.of("groupId", group.getId()));
+
+        // 返回群组ID（使用 HashMap 兼容 Java 8）
+        Map<String, Object> response = new HashMap<>();
+        response.put("groupId", group.getId());
+        return ResponseEntity.ok(response);
     }
 
     // 按名字搜索群聊

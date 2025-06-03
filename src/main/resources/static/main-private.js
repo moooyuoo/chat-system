@@ -120,15 +120,81 @@ async function renderChatPanel(friend) {
     </div>
 </div>
             <div class="wx-chat-messages" id="chat-messages"></div>
-            <div class="wx-chat-input-area">
-                <textarea class="wx-chat-input" placeholder="请输入消息..."></textarea>
-                <button class="wx-send-btn">发送</button>
-            </div>
+<!--            <div class="wx-chat-input-area">-->
+<!--                <textarea class="wx-chat-input" placeholder="请输入消息..."></textarea>-->
+<!--                <button class="wx-send-btn">发送</button>-->
+<!--            </div>-->
+    <div class="wx-chat-input-area">
+    <div class="wx-input-container">
+        <label for="image-upload" class="wx-upload-btn" title="发送图片">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 5H5C3.89543 5 3 5.89543 3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V7C21 5.89543 20.1046 5 19 5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M16.5 11C16.5 12.3807 15.3807 13.5 14 13.5C12.6193 13.5 11.5 12.3807 11.5 11C11.5 9.61929 12.6193 8.5 14 8.5C15.3807 8.5 16.5 9.61929 16.5 11Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 15L7 11L10 14L14 10L21 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        </label>
+        <input type="file" id="image-upload" accept="image/*" style="display: none;" multiple>
+        <textarea class="wx-chat-input" placeholder="请输入消息..."></textarea>
+        <button class="wx-send-btn">发送</button>
+    </div>
+</div>
             
             
         </div>
         
         <style>
+        .wx-chat-input-area {
+    padding: 10px;
+    background: #f5f5f5;
+    border-top: 1px solid #e6e6e6;
+}
+
+.wx-input-container {
+    display: flex;
+    align-items: flex-end; /* 底部对齐 */
+    gap: 8px; /* 元素间距 */
+}
+
+.wx-upload-btn {
+    cursor: pointer;
+    padding: 8px;
+    color: #7d7d7d;
+    transition: color 0.2s;
+    flex-shrink: 0; /* 防止按钮被压缩 */
+}
+
+.wx-upload-btn:hover {
+    color: #07C160;
+}
+
+.wx-chat-input {
+    flex-grow: 1;
+    min-height: 40px;
+    max-height: 120px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: none;
+    outline: none;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.wx-send-btn {
+    flex-shrink: 0;
+    padding: 0 16px;
+    height: 40px;
+    background-color: #07C160;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.wx-send-btn:hover {
+    background-color: #06AD56;
+}
             .wx-chat-container {
                 display: flex;
                 flex-direction: column;
