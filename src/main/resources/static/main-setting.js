@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await fetchCurrentUser();
 
     const sidebarBtns = document.querySelectorAll('.sidebar-btn');
-    const settingsBtn = sidebarBtns[4]; // 假设设置按钮是第5个
+    const settingsBtn = sidebarBtns[5]; // 假设设置按钮是第5个
 
     settingsBtn.addEventListener('click', () => {
         sidebarBtns.forEach(btn => btn.classList.remove('active'));

@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -74,6 +75,19 @@ public class UserController {
             return ResponseEntity.ok().body(null);
         }
         return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/info")
+    public ResponseEntity<?> getUserInfo(@RequestParam Long userId) {
+        Optional<User> userOpt = userService.findById(userId);
+        if (userOpt.isEmpty()) return ResponseEntity.status(404).body("用户不存在");
+        User user = userOpt.get();
+        // 只返回必要信息，避免敏感字段泄露
+        return ResponseEntity.ok(Map.of(
+                "id", user.getId(),
+                "username", user.getUsername(),
+                "avatar", user.getAvatar()
+        ));
     }
 
     // 修改昵称
