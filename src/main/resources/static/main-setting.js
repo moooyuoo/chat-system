@@ -20,10 +20,10 @@ async function renderSettingsPage() {
             </div>
             <div class="settings-actions">
                 <button class="edit-nickname-btn">修改昵称</button>
-                <!--<button class="edit-avatar-btn">更换头像</button>-->
+                <button class="edit-avatar-btn">更换头像</button>
                 <button class="edit-password-btn">修改密码</button>
             </div>
-            <p style="color:#888;margin-top:18px;">更多功能敬请期待。</p>
+            
         </div>
         <style>
             .settings-page { padding: 48px 32px; }
@@ -50,7 +50,7 @@ async function renderSettingsPage() {
         renderSettingsPage();
     };
 
-    // 更换头像
+    // 修改头像
     mainContent.querySelector('.edit-avatar-btn').onclick = () => {
         const input = document.createElement('input');
         input.type = 'file';
@@ -65,15 +65,30 @@ async function renderSettingsPage() {
             });
             alert(await res.text());
 
-            // 头像上传成功后，刷新所有头像
-            document.querySelectorAll('.user-avatar').forEach(img => {
-                img.src = (img.src.split('?')[0]) + '?t=' + Date.now();
-            });
+            // 重新获取用户信息，拿到新头像路径
+            let newAvatar = 'avatar.png';
+            try {
+                const userRes = await fetch('/api/user/me');
+                if (userRes.ok) {
+                    const user = await userRes.json();
+                    newAvatar = user.avatar || 'avatar.png';
+                    // 如果有全局变量 currentUser
+                    if (window.currentUser) window.currentUser.avatar = newAvatar;
+                }
+            } catch {}
 
-            if (avatarImg) {
-                // 加时间戳防止缓存
-                avatarImg.src = (avatarImg.src.split('?')[0]) + '?t=' + Date.now();
+            // 刷新所有头像
+            document.querySelectorAll('.user-avatar').forEach(img => {
+                img.src = (newAvatar || img.src.split('?')[0]) + '?t=' + Date.now();
+            });
+            // 刷新侧边栏头像
+            const sidebarAvatar = document.querySelector('.avatar-box img');
+            if (sidebarAvatar) {
+                sidebarAvatar.src = (newAvatar || sidebarAvatar.src.split('?')[0]) + '?t=' + Date.now();
             }
+            // 如有其他区域用到头像，也可在此刷新
+
+            await renderSettingsPage(); // 可选：刷新设置页
         };
         input.click();
     };
@@ -97,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await fetchCurrentUser();
 
     const sidebarBtns = document.querySelectorAll('.sidebar-btn');
-    const settingsBtn = sidebarBtns[4]; // 假设设置按钮是第5个
+    const settingsBtn = sidebarBtns[5]; // 假设设置按钮是第5个
 
     settingsBtn.addEventListener('click', () => {
         sidebarBtns.forEach(btn => btn.classList.remove('active'));

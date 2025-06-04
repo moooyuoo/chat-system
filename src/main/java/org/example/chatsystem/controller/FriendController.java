@@ -37,6 +37,22 @@ public class FriendController {
         List<User> friends = friendService.getFriends(user.getId());
         return ResponseEntity.ok(friends);
     }
+
+    @GetMapping("/pagelist")
+    public ResponseEntity<?> getFriendPageList(HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) {
+            return ResponseEntity.status(401).build();
+        }
+        User user = userService.findByUsername(username).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).build();
+        }
+        // 返回分组结构
+        Map<String, List<User>> grouped = friendService.getGroupedFriends(user.getId());
+        return ResponseEntity.ok(grouped);
+    }
+
     @PostMapping("/add")
     public ResponseEntity<String> addFriend(
             @RequestParam(required = false) String target,
@@ -102,4 +118,45 @@ public class FriendController {
         return ResponseEntity.ok("操作成功");
     }
 
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteFriend(@RequestParam Long friendId, HttpSession session) {
+        String username = (String) session.getAttribute("username");
+        if (username == null) return ResponseEntity.status(401).body("未登录");
+        User user = userService.findByUsername(username).orElse(null);
+        if (user == null) return ResponseEntity.status(404).body("用户不存在");
+        boolean ok = friendService.deleteFriend(user.getId(), friendId);
+        return ResponseEntity.ok(ok ? "删除成功" : "删除失败");
+    }
+
+    // 获取分组列表
+@GetMapping("/group/list")
+public ResponseEntity<?> getGroupList(HttpSession session) {
+    String username = (String) session.getAttribute("username");
+    if (username == null) return ResponseEntity.status(401).body("未登录");
+    User user = userService.findByUsername(username).orElse(null);
+    if (user == null) return ResponseEntity.status(404).body("用户不存在");
+    return ResponseEntity.ok(friendService.getFriendGroups(user.getId()));
+}
+
+// 新增分组
+@PostMapping("/group/add")
+public ResponseEntity<?> addGroup(@RequestParam String name, HttpSession session) {
+    String username = (String) session.getAttribute("username");
+    if (username == null) return ResponseEntity.status(401).body("未登录");
+    User user = userService.findByUsername(username).orElse(null);
+    if (user == null) return ResponseEntity.status(404).body("用户不存在");
+    boolean ok = friendService.addFriendGroup(user.getId(), name);
+    return ResponseEntity.ok(ok ? "分组添加成功" : "分组已存在");
+}
+
+// 设置好友分组
+@PostMapping("/group/set")
+public ResponseEntity<?> setFriendGroup(@RequestParam Long friendId, @RequestParam String groupName, HttpSession session) {
+    String username = (String) session.getAttribute("username");
+    if (username == null) return ResponseEntity.status(401).body("未登录");
+    User user = userService.findByUsername(username).orElse(null);
+    if (user == null) return ResponseEntity.status(404).body("用户不存在");
+    boolean ok = friendService.setFriendGroup(user.getId(), friendId, groupName);
+    return ResponseEntity.ok(ok ? "分组设置成功" : "设置失败");
+}
 }
